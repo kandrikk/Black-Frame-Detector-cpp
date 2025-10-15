@@ -13,10 +13,6 @@
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
-    QFont font;
-    font.setFamily("Segoe UI");
-    font.setBold(true);
-
     QWidget window;
     window.setWindowTitle("Black Frame Detector");
     window.resize(600, 800);
@@ -24,54 +20,70 @@ int main(int argc, char *argv[]) {
 
 
     QLabel *logoLabel = new QLabel();
-    QPixmap logoPixmap("../photo/logo.png");
+    QPixmap logoPixmap("../photo/250x100.png");
 
     if (logoPixmap.isNull()) {
         logoLabel->setText("<center><b>Black Frame Detector</b></center>");
     } else {
-        logoLabel->setPixmap(logoPixmap.scaledToHeight(300, Qt::SmoothTransformation));
+        logoLabel->setPixmap(logoPixmap.scaledToHeight(125, Qt::SmoothTransformation));
     }
     logoLabel->setAlignment(Qt::AlignCenter);
     
     QLineEdit *pathEdit = new QLineEdit();
     pathEdit->setPlaceholderText("Video file path....");
     pathEdit->setStyleSheet(
-    "QLineEdit {"
-    "    padding: 8px 12px;"               /* отступы внутри */
-    "    border: 1px solid #cccccc;"        /* тонкая серая рамка */
-    "    border-radius: 6px;"               /* скруглённые углы */
-    "    background-color: #a5a5a5;"          /* белый фон */
-    "    selection-background-color: #535d5e;" /* цвет выделения текста */
-    "    selection-color: white;"
-    "    font-size: 14px;"
-    "}"
-    "QLineEdit:focus {"
-    "    border: 1.5px solid #000000ff;"      /* подсветка при фокусе */
-    "    outline: none;"
-    "}"
-);
+        "QLineEdit {"
+        "    padding: 8px 12px;"               /* отступы внутри */
+        "    border: 1.5px solid #515b5c;"        /* тонкая серая рамка */
+        "    border-radius: 6px;"               /* скруглённые углы */
+        "    background-color: #a5a5a5;"          /* белый фон */
+        "    selection-background-color: #235b30;" /* цвет выделения текста */
+        "    selection-color: white;"
+        "    font-size: 14px;"
+        "}"
+    );
 
-    QPushButton *analyzeButton = new QPushButton("");
-    QIcon analyzeIcon;
-    analyzeIcon.addPixmap(QPixmap("../photo/start-analysis-logo.png"), QIcon::Normal, QIcon::Off);
-    analyzeIcon.addPixmap(QPixmap("../photo/analysis-clicked.png"), QIcon::Normal, QIcon::On);
+    QPushButton *analyzeButton = new QPushButton();
+    analyzeButton->setFixedSize(200, 85); // чтобы не растягивалась
 
-    analyzeButton->setIcon(analyzeIcon);
-    analyzeButton->setIconSize(QSize(200, 200));
-    analyzeButton->setCheckable(true);
-    
+    // Устанавливаем стиль с фоновыми изображениями
+    analyzeButton->setStyleSheet(
+        "QPushButton {"
+        "    border: none;"
+        "    background-image: url(../photo/start-analysis-logo.png);"
+        "    background-repeat: no-repeat;"
+        "    background-position: center;"
+        "    background-color: transparent;"
+        "}"
+        "QPushButton:hover {"
+        "    background-image: url(../photo/start-analysis-hover.png);"
+        "}"
+        "QPushButton:pressed {"
+        "    background-image: url(../photo/start-analysis-clicked.png);"
+        "}"
+    );
 
     QPushButton *browseButton = new QPushButton("");
-    QIcon icon;
-    icon.addPixmap(QPixmap("../photo/browse.png"), QIcon::Normal, QIcon::Off);
-    icon.addPixmap(QPixmap("../photo/browse-clicked.png"), QIcon::Normal, QIcon::On);
-    browseButton->setIcon(icon);
-    browseButton->setIconSize(QSize(100, 100));
-    browseButton->setCheckable(true);
+    browseButton->setFixedSize(120, 60);
+
+    browseButton->setStyleSheet(
+        "QPushButton {"
+        "    border: none;"
+        "    background-image: url(../photo/browse-logo.png);"
+        "    background-repeat: no-repeat;"
+        "    background-position: center;"
+        "    background-color: transparent;"
+        "}"
+        "QPushButton:hover {"
+        "    background-image: url(../photo/browse-hover.png);"
+        "}"
+        "QPushButton:pressed {"
+        "    background-image: url(../photo/browse-clicked.png);"
+        "}"
+    );
 
     QLabel *resultLabel = new QLabel("The result will appear here");
     resultLabel->setWordWrap(true);
-    resultLabel->setFont(font);
 
     QHBoxLayout *pathLayout = new QHBoxLayout();
     pathLayout->addWidget(pathEdit);
@@ -81,17 +93,18 @@ int main(int argc, char *argv[]) {
     auto *mainLayout = new QVBoxLayout();
     mainLayout->addWidget(logoLabel);
     mainLayout->addLayout(pathLayout);
-    mainLayout->addWidget(analyzeButton);
+    mainLayout->addWidget(analyzeButton, 0, Qt::AlignCenter);
     mainLayout->addWidget(resultLabel);
 
-    QObject::connect(analyzeButton, &QPushButton::clicked, [pathEdit, resultLabel]() {
+    QObject::connect(analyzeButton, &QPushButton::clicked, [analyzeButton, pathEdit, resultLabel]() {
         std::string videoPath = pathEdit->text().trimmed().toStdString();
         QString res = QString::fromStdString(findBlackFrames(videoPath, 5));
-
+        analyzeButton->setChecked(false);
         resultLabel->setText("Result:\n" + res);
+
     });
 
-    QObject::connect(browseButton, &QPushButton::clicked, [pathEdit]() {
+    QObject::connect(browseButton, &QPushButton::clicked, [browseButton, pathEdit]() {
         QString filepath = QFileDialog::getOpenFileName(
             nullptr,
             "Select a video file",
@@ -102,6 +115,8 @@ int main(int argc, char *argv[]) {
         if (!filepath.isEmpty()) {
             pathEdit->setText(filepath);
         }
+
+        browseButton->setChecked(false);
     });
 
     window.setLayout(mainLayout);
