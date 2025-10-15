@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-e67c941df0dcc11f0aa706cca13a02d5 Black-Frame-Detector-cpp_autogen/timestamp
-ae6bfeacb889705531b14c19a63bd2cc CMakeFiles/Black-Frame-Detector-cpp_autogen
