@@ -1,0 +1,5 @@
+/Users/kandik/Project/my_program/Black-Frame-Detector-cpp/build/CMakeFiles/Black-Frame-Detector-cpp.dir
+/Users/kandik/Project/my_program/Black-Frame-Detector-cpp/build/CMakeFiles/edit_cache.dir
+/Users/kandik/Project/my_program/Black-Frame-Detector-cpp/build/CMakeFiles/rebuild_cache.dir
+/Users/kandik/Project/my_program/Black-Frame-Detector-cpp/build/CMakeFiles/Black-Frame-Detector-cpp_autogen_timestamp_deps.dir
+/Users/kandik/Project/my_program/Black-Frame-Detector-cpp/build/CMakeFiles/Black-Frame-Detector-cpp_autogen.dir
