@@ -7,6 +7,7 @@
 #include <QHBoxLayout>
 #include <QDir>
 #include <QFileDialog>
+#include <QTextEdit>
 #include "../include/BlackFrameDetector.h"
 #include <string>
 
@@ -15,7 +16,7 @@ int main(int argc, char *argv[]) {
 
     QWidget window;
     window.setWindowTitle("Black Frame Detector");
-    window.resize(600, 800);
+    window.resize(400, 600);
     window.setStyleSheet("background: #010202");
 
 
@@ -37,29 +38,29 @@ int main(int argc, char *argv[]) {
         "    border: 1.5px solid #515b5c;"        /* тонкая серая рамка */
         "    border-radius: 6px;"               /* скруглённые углы */
         "    background-color: #a5a5a5;"          /* белый фон */
-        "    selection-background-color: #235b30;" /* цвет выделения текста */
+        "    selection-background-color: #142838;" /* цвет выделения текста */
         "    selection-color: white;"
         "    font-size: 14px;"
         "}"
     );
 
     QPushButton *analyzeButton = new QPushButton();
-    analyzeButton->setFixedSize(200, 85); // чтобы не растягивалась
+    analyzeButton->setFixedSize(250, 100); // чтобы не растягивалась
 
     // Устанавливаем стиль с фоновыми изображениями
     analyzeButton->setStyleSheet(
         "QPushButton {"
         "    border: none;"
-        "    background-image: url(../photo/start-analysis-logo.png);"
+        "    background-image: url(../icons/black-frame-button.png);"
         "    background-repeat: no-repeat;"
         "    background-position: center;"
         "    background-color: transparent;"
         "}"
         "QPushButton:hover {"
-        "    background-image: url(../photo/start-analysis-hover.png);"
+        "    background-image: url(../icons/black-frame-button-hover.png);"
         "}"
         "QPushButton:pressed {"
-        "    background-image: url(../photo/start-analysis-clicked.png);"
+        "    background-image: url(../icons/black-frame-button-analysis.png);"
         "}"
     );
 
@@ -69,21 +70,33 @@ int main(int argc, char *argv[]) {
     browseButton->setStyleSheet(
         "QPushButton {"
         "    border: none;"
-        "    background-image: url(../photo/browse-logo.png);"
+        "    background-image: url(../icons/browse-logo.png);"
         "    background-repeat: no-repeat;"
         "    background-position: center;"
         "    background-color: transparent;"
         "}"
         "QPushButton:hover {"
-        "    background-image: url(../photo/browse-hover.png);"
+        "    background-image: url(../icons/browse-hover.png);"
         "}"
         "QPushButton:pressed {"
-        "    background-image: url(../photo/browse-clicked.png);"
+        "    background-image: url(../icons/browse-clicked.png);"
         "}"
     );
 
-    QLabel *resultLabel = new QLabel("The result will appear here");
-    resultLabel->setWordWrap(true);
+    QTextEdit *resultTextEdit = new QTextEdit();
+    resultTextEdit->setReadOnly(true);
+    resultTextEdit->setPlaceholderText("The result will appear here");
+    resultTextEdit->setStyleSheet(
+        "QTextEdit{"
+        "    background-color: #1c7a8dff;"
+        "    color: #e0e0e0;"
+        "    border: 1.5px solid #a5a5a5;"
+        "    border-radius: 6px;"
+        "    padding: 10px;"
+        "    font-family: Courier New, monospace;"
+        "    font-size: 14px;"
+        "}"
+    );
 
     QHBoxLayout *pathLayout = new QHBoxLayout();
     pathLayout->addWidget(pathEdit);
@@ -91,16 +104,16 @@ int main(int argc, char *argv[]) {
     
 
     auto *mainLayout = new QVBoxLayout();
-    mainLayout->addWidget(logoLabel);
+    //mainLayout->addWidget(logoLabel);
     mainLayout->addLayout(pathLayout);
     mainLayout->addWidget(analyzeButton, 0, Qt::AlignCenter);
-    mainLayout->addWidget(resultLabel);
+    mainLayout->addWidget(resultTextEdit);
 
-    QObject::connect(analyzeButton, &QPushButton::clicked, [analyzeButton, pathEdit, resultLabel]() {
+    QObject::connect(analyzeButton, &QPushButton::clicked, [analyzeButton, pathEdit, resultTextEdit]() {
         std::string videoPath = pathEdit->text().trimmed().toStdString();
         QString res = QString::fromStdString(findBlackFrames(videoPath, 5));
         analyzeButton->setChecked(false);
-        resultLabel->setText("Result:\n" + res);
+        resultTextEdit->setPlainText(res);
 
     });
 
