@@ -7,6 +7,9 @@
 #include <iostream>
 #include <sstream>
 #include <QString>
+#include <functional>
 
 std::string formatTimestamp(double second, double fps);
-std::string findBlackFrames(const std::string& videoPath, double threshold);
+std::string findBlackFrames(const std::string& videoPath, double threshold, 
+                                std::function<void(int)> progressCallback = nullptr);
+std::vector<std::string> infoVideoFile(const std::string& videoPath);

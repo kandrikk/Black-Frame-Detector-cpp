@@ -10,6 +10,8 @@
 #include <QTextEdit>
 #include "../include/BlackFrameDetector.h"
 #include <string>
+#include <QtConcurrent>
+#include <QFutureWatcher>
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
@@ -41,15 +43,16 @@ int main(int argc, char *argv[]) {
         "    selection-background-color: #142838;" /* цвет выделения текста */
         "    selection-color: white;"
         "    font-size: 14px;"
+        "    height: 30px;"
+        "    color: #161824"
         "}"
     );
 
     QPushButton *analyzeButton = new QPushButton();
     analyzeButton->setFixedSize(250, 100); // чтобы не растягивалась
 
-    // Устанавливаем стиль с фоновыми изображениями
-    analyzeButton->setStyleSheet(
-        "QPushButton {"
+    QString styleAnalyzeBotton =   
+    "QPushButton {"
         "    border: none;"
         "    background-image: url(../icons/black-frame-button.png);"
         "    background-repeat: no-repeat;"
@@ -61,8 +64,9 @@ int main(int argc, char *argv[]) {
         "}"
         "QPushButton:pressed {"
         "    background-image: url(../icons/black-frame-button-analysis.png);"
-        "}"
-    );
+        "}";
+
+    analyzeButton->setStyleSheet(styleAnalyzeBotton);
 
     QPushButton *browseButton = new QPushButton("");
     browseButton->setFixedSize(120, 60);
@@ -109,12 +113,53 @@ int main(int argc, char *argv[]) {
     mainLayout->addWidget(analyzeButton, 0, Qt::AlignCenter);
     mainLayout->addWidget(resultTextEdit);
 
-    QObject::connect(analyzeButton, &QPushButton::clicked, [analyzeButton, pathEdit, resultTextEdit]() {
-        std::string videoPath = pathEdit->text().trimmed().toStdString();
-        QString res = QString::fromStdString(findBlackFrames(videoPath, 5));
-        analyzeButton->setChecked(false);
-        resultTextEdit->setPlainText(res);
+    QObject::connect(analyzeButton, &QPushButton::clicked, [styleAnalyzeBotton, analyzeButton, pathEdit, resultTextEdit]() {
+        resultTextEdit->clear();
+        resultTextEdit->insertPlainText("Analyzing... Please wait.\n\n");
+        analyzeButton->setEnabled(false);
+        analyzeButton->setStyleSheet(
+            "QPushButton {"
+            "    background-image: url(../icons/black-frame-button-analysis.png);"
+            "}"
+        );
 
+
+        std::string videoPath = pathEdit->text().trimmed().toStdString();
+        std::vector<std::string> infoVideoFileVector = infoVideoFile(videoPath);
+        QString info;
+
+        if (infoVideoFileVector.size() != 4) {
+            info = QString::fromStdString(infoVideoFileVector[0] + "\n");
+            analyzeButton->setEnabled(true);
+            analyzeButton->setStyleSheet(styleAnalyzeBotton);
+
+        } else {
+            info = "Filename: " + QString::fromStdString(infoVideoFileVector[0]) + "\n"
+            + "Time: " + QString::fromStdString(infoVideoFileVector[1]) + "\n"
+            + "FPS: " + QString::fromStdString(infoVideoFileVector[2]) + "\n"
+            + "Frames: " + QString::fromStdString(infoVideoFileVector[3]) + "\n";
+            
+            QFuture<QString> future = QtConcurrent::run([videoPath]() -> QString {
+                std::string result = findBlackFrames(videoPath, 5);
+                return QString::fromStdString(result);
+            });
+
+            QFutureWatcher<QString> *watcher = new QFutureWatcher<QString>();
+            watcher->setFuture(future);
+
+            QObject::connect(watcher, &QFutureWatcher<QString>::finished, 
+                [watcher, analyzeButton, resultTextEdit, styleAnalyzeBotton]() {
+                    analyzeButton->setStyleSheet(styleAnalyzeBotton);
+
+                    QString result = watcher->result();
+                    resultTextEdit->insertPlainText(result);
+                    analyzeButton->setEnabled(true); 
+                    watcher->deleteLater();
+                }
+            );
+            }
+
+        resultTextEdit->insertPlainText(info + "\n");
     });
 
     QObject::connect(browseButton, &QPushButton::clicked, [browseButton, pathEdit]() {

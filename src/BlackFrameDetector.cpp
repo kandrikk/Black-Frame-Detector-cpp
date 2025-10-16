@@ -20,7 +20,22 @@ std::string formatTimestamp(double second, double fps) {
     return oss.str();
 }
 
-std::string findBlackFrames(const std::string& videoPath, double threshold) {
+std::vector<std::string> infoVideoFile(const std::string& videoPath) {
+    if (!std::filesystem::exists(videoPath)) return {"File not found."};
+
+    cv::VideoCapture cap(videoPath);
+    if (!cap.isOpened()) return {"Failed to open file."};
+
+    std::string filename = std::filesystem::path(videoPath).filename().string();
+    double fps = cap.get(cv::CAP_PROP_FPS);
+    int totalFrames = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_COUNT));
+    std::string time = formatTimestamp(std::round(totalFrames / fps), fps);
+    
+    return {filename, time, std::to_string(fps), std::to_string(totalFrames)};
+}
+
+std::string findBlackFrames(const std::string& videoPath, double threshold, 
+                                std::function<void(int)> progressCallback) {
     std::string result;
 
     if (!std::filesystem::exists(videoPath)) {
@@ -68,7 +83,19 @@ std::string findBlackFrames(const std::string& videoPath, double threshold) {
                 blackFrames.push_back(currentSequence.value());
                 currentSequence.reset();
             }
-        } 
+        }
+
+            // 🔥 Вызов прогресса
+        if (progressCallback && totalFrames > 0) {
+            // Оптимизация: не обновлять слишком часто
+            if (frameCount % std::max(1, totalFrames / 200) == 0) {
+                progressCallback(frameCount);
+            }
+        }
+    }
+
+    if (progressCallback && totalFrames > 0) {
+        progressCallback(totalFrames);
     }
 
     if (currentSequence.has_value()) {

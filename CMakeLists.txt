@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Сначала найдём все зависимости
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Concurrent)
 find_package(OpenCV REQUIRED)
 
 qt_standard_project_setup()
@@ -17,6 +17,7 @@ qt_add_executable(Black-Frame-Detector-cpp src/main.cpp src/BlackFrameDetector.c
 target_link_libraries(Black-Frame-Detector-cpp PRIVATE
     Qt6::Core
     Qt6::Widgets
+    Qt6::Concurrent
     ${OpenCV_LIBS}
 )
 
