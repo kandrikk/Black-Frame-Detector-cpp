@@ -26,8 +26,6 @@ std::string formatTimestamp(double second, double fps) {
 }
 
 std::vector<std::string> infoVideoFile(const std::string& videoPath) {
-    if (!std::filesystem::exists(videoPath)) return {"File not found."};
-
     cv::VideoCapture cap(videoPath);
     if (!cap.isOpened()) return {"Failed to open file."};
 
@@ -42,11 +40,7 @@ std::vector<std::string> infoVideoFile(const std::string& videoPath) {
 std::string findBlackFrames(const std::string& videoPath, double threshold, 
                                 std::function<void(int)> progressCallback) {
     std::string result;
-
-    if (!std::filesystem::exists(videoPath)) {
-        return "File not found.";
-    }
-
+    
     cv::VideoCapture cap(videoPath);
     if (!cap.isOpened()) {
         return "Failed to open file.";
@@ -90,15 +84,15 @@ std::string findBlackFrames(const std::string& videoPath, double threshold,
             }
         }
 
-            // 🔥 Вызов прогресса
         if (progressCallback && totalFrames > 0) {
-            // Оптимизация: не обновлять слишком часто
+            // Ограничиваем частоту вызова (например, 200 раз за весь анализ)
             if (frameCount % std::max(1, totalFrames / 200) == 0) {
                 progressCallback(frameCount);
             }
         }
     }
 
+    // Финальный вызов — завершение
     if (progressCallback && totalFrames > 0) {
         progressCallback(totalFrames);
     }

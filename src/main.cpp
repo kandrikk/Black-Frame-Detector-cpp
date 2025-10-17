@@ -112,47 +112,76 @@ int main(int argc, char *argv[]) {
     );
 
     QObject::connect(analyzeButton, &QPushButton::clicked, [styleAnalyzeBotton, analyzeButton, pathEdit, resultTextEdit]() {
-        // --- Шаг 1: Показываем "Analyzing..." ---
-        resultTextEdit->setHtml(
-            "<div style='text-align: center; color: white; font-weight: bold; font-size: 16px;'>"
-            "Analyzing... Please wait."
-            "</div>"
-        );
+        QElapsedTimer timer;
+        timer.start();
 
-        analyzeButton->setEnabled(false);
-        analyzeButton->setStyleSheet(
-            "QPushButton {"
-            "    background-image: url(../icons/black-frame-button-analysis.png);"
-            "}"
-        );
-
-        std::string videoPath = pathEdit->text().trimmed().toStdString();
+        QString videoPath = pathEdit->text().trimmed();
 
         // --- Проверка файла ---
-        std::vector<std::string> infoVideoFileVector = infoVideoFile(videoPath);
-        if (infoVideoFileVector.size() != 4) {
-            QString errorMsg = QString::fromStdString(infoVideoFileVector[0]);
+        if (videoPath.isEmpty()) {
+            QString errorMsg = "No file selected";
             resultTextEdit->setHtml(
                 "<div style='text-align: center; color: #FF6347; font-weight: bold; font-size: 16px;'>"
                 + errorMsg.toHtmlEscaped() +
                 "</div>"
             );
-            analyzeButton->setEnabled(true);
-            analyzeButton->setStyleSheet(styleAnalyzeBotton);
+
             return;
         }
 
-        // --- Запускаем таймер и фоновый анализ ---
-        QElapsedTimer timer;
-        timer.start();
+        QFileInfo checkFileExist(videoPath);
+        if (!checkFileExist.exists()) {
+            QString errorMsg = "File not found.";
+            resultTextEdit->setHtml(
+                "<div style='text-align: center; color: #FF6347; font-weight: bold; font-size: 16px;'>"
+                + errorMsg.toHtmlEscaped() +
+                "</div>"
+            );
 
-        QString filename = QString::fromStdString(infoVideoFileVector[0]);
-        QString duration = QString::fromStdString(infoVideoFileVector[1]);
-        QString fps = QString::fromStdString(infoVideoFileVector[2]);
-        QString frames = QString::fromStdString(infoVideoFileVector[3]);
+            return;
+        } else if (!checkFileExist.isFile()) {
+            QString errorMsg = "Is not file.";
+            resultTextEdit->setHtml(
+                "<div style='text-align: center; color: #FF6347; font-weight: bold; font-size: 16px;'>"
+                + errorMsg.toHtmlEscaped() +
+                "</div>"
+            );
+
+            return;
+        }
+
+        std::vector<std::string> info = infoVideoFile(videoPath.toStdString());
+        QString filename = QString::fromStdString(info[0]);
+        QString duration = QString::fromStdString(info[1]);
+        QString fps = QString::fromStdString(info[2]);
+        QString frames = QString::fromStdString(info[3]);
+        // --- СРАЗУ показываем информацию о файле ---
+        QString initialHtml = QString(R"(
+            <div style="text-align: center;">
+                <div style="display: inline-block; text-align: left; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.4; color: white;">
+                    <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">INFO</div>
+                    <div>Filename: %1</div>
+                    <div>Time: %2</div>
+                    <div>FPS: %3</div>
+                    <div>Frames: %4</div>
+                    <br>
+                    <div style="font-weight: bold; font-size: 16px; margin: 15px 0 10px 0; color: #FFD700;">Analyzing black frames...</div>
+                </div>
+            </div>
+        )")
+        .arg(filename.toHtmlEscaped())
+        .arg(duration.toHtmlEscaped())
+        .arg(fps.toHtmlEscaped())
+        .arg(frames.toHtmlEscaped());
+
+        resultTextEdit->setHtml(initialHtml);
+        analyzeButton->setEnabled(false);
+        analyzeButton->setStyleSheet(
+            "QPushButton { background-image: url(../icons/black-frame-button-analysis.png); }"
+        );
 
         QFuture<QString> future = QtConcurrent::run([videoPath]() -> QString {
-            std::string result = findBlackFrames(videoPath, 5.0);
+            std::string result = findBlackFrames(videoPath.toStdString(), 5.0);
             return QString::fromStdString(result);
         });
 
@@ -171,17 +200,19 @@ int main(int argc, char *argv[]) {
 
                 // Формируем красивый HTML
                 QString html = QString(R"(
-                    <div style="text-align: center; color: white; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.4;">
-                        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">INFO</div>
-                        <div>Filename: %1</div>
-                        <div>Time: %2</div>
-                        <div>FPS: %3</div>
-                        <div>Frames: %4</div>
-                        <br>
-                        <div style="font-weight: bold; font-size: 16px; margin: 15px 0 10px 0;">Black Frames:</div>
-                        <div style="white-space: pre;">%5</div>
-                        <br>
-                        <div style="font-weight: bold; color: #FFD700;">%6</div>
+                    <div style="text-align: center;">
+                        <div style="display: inline-block; text-align: left; font-family: 'Courier New', monospace; font-size: 14px; line-height: 1.4; color: white;">
+                            <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">INFO</div>
+                            <div>Filename: %1</div>
+                            <div>Time: %2</div>
+                            <div>FPS: %3</div>
+                            <div>Frames: %4</div>
+                            <br>
+                            <div style="font-weight: bold; font-size: 16px; margin: 15px 0 10px 0;">Black Frames:</div>
+                            <div style="white-space: pre;">%5</div>
+                            <br>
+                            <div style="font-weight: bold; color: #FFD700;">%6</div>
+                        </div>
                     </div>
                 )")
                 .arg(filename.toHtmlEscaped())
