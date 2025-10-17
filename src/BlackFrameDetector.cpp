@@ -9,12 +9,17 @@ std::string formatTimestamp(double second, double fps) {
     int milliseconds = static_cast<int>((second - totalSecond) * 1000);
     int frame = static_cast<int>(std::round(milliseconds / (1000 / fps)));
 
+    int last;
+
+    if (fps == 0) last = milliseconds;
+    else last = fps;
+
     std::ostringstream oss;
     oss << std::setfill('0')
         << std::setw(2) << hours << ":"
         << std::setw(2) << minutes << ":"
         << std::setw(2) << secs << "."
-        << std::setw(2) << frame;
+        << std::setw(2) << last;
 
 
     return oss.str();
