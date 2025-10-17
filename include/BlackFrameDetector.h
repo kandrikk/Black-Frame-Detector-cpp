@@ -11,5 +11,5 @@
 
 std::string formatTimestamp(double second, double fps);
 std::string findBlackFrames(const std::string& videoPath, double threshold = 5, 
-                                std::function<void(int)> progressCallback = nullptr);
+                                std::function<void(int, int)> progressCallback = nullptr);
 std::vector<std::string> infoVideoFile(const std::string& videoPath);

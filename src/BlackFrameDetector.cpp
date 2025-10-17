@@ -38,9 +38,9 @@ std::vector<std::string> infoVideoFile(const std::string& videoPath) {
 }
 
 std::string findBlackFrames(const std::string& videoPath, double threshold, 
-                                std::function<void(int)> progressCallback) {
+                                std::function<void(int, int)> progressCallback) {
     std::string result;
-    
+
     cv::VideoCapture cap(videoPath);
     if (!cap.isOpened()) {
         return "Failed to open file.";
@@ -84,17 +84,18 @@ std::string findBlackFrames(const std::string& videoPath, double threshold,
             }
         }
 
-        if (progressCallback && totalFrames > 0) {
-            // Ограничиваем частоту вызова (например, 200 раз за весь анализ)
+        // 🔥 Вызов прогресса: передаём текущий кадр и общее число
+        if (progressCallback) {
+            // Обновляем не слишком часто (~200 раз)
             if (frameCount % std::max(1, totalFrames / 200) == 0) {
-                progressCallback(frameCount);
+                progressCallback(frameCount, totalFrames);
             }
         }
     }
 
-    // Финальный вызов — завершение
-    if (progressCallback && totalFrames > 0) {
-        progressCallback(totalFrames);
+    // Финальный прогресс — 100%
+    if (progressCallback) {
+        progressCallback(totalFrames, totalFrames);
     }
 
     if (currentSequence.has_value()) {
